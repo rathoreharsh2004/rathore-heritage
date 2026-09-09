@@ -3,15 +3,182 @@
 // Complete REST API Integration with MongoDB Atlas
 // ==========================================================================
 
-const API = window.API_URL || "http://localhost:5000/api";
+let API = localStorage.getItem("rh_api_url") || window.API_URL || "http://localhost:5000/api";
 let token = localStorage.getItem("rh_admin_token");
+let isOfflineMode = localStorage.getItem("rh_offline_mode") === "true";
+
 let currentSite = null;
 let currentProjects = [];
 let currentCraftsmanship = [];
 let currentServices = [];
 let currentEnquiries = [];
 
-// ==================== AUTHENTICATION ====================
+// ==================== DEFAULT PDF DATASETS (OFFLINE FALLBACK) ====================
+const DEFAULT_SITE = {
+  heroEyebrow: "HERITAGE RESTORATION • LUXURY HAVELIS • PALACE STYLE INTERIORS • RESORTS • HERITAGE CONSULTANCY",
+  heroTitle: "Where timeless Indian\nheritage meets royal living.",
+  heroSubtitle: "Preserving Royal Legacy Through Timeless Heritage Architecture.",
+  heroImage: "assets/hero-bg.jpg",
+  aboutTitle: "ABOUT RATHORE HERITAGE DEVELOPERS",
+  aboutContent: "Rathore Heritage Developers specializes in authentic heritage construction with deep expertise in traditional architectural craftsmanship.\n\nWe design luxurious heritage spaces including havelis, villas, resorts, and palace-style interiors that reflect royal elegance and cultural authenticity.\n\nOur projects feature signature elements like Heritage Dodi entrances, Thekri glass work, heritage-style bars, intricately carved furniture, decorative pillars, and traditional Jhomer chandeliers.\n\nCeilings are artistically detailed with Mor Pankh (peacock feather) themes, along with authentic Pipla Patti and Tordi craftsmanship.\n\nWe also design Ghokda-style domes and marble borders with Khajur Patti detailing, preserving the true essence of heritage architecture.\n\nBy blending traditional artistry with strong civil engineering practices, we ensure strength, durability, and timeless beauty in every project.",
+  aboutImage: "assets/about-heritage.jpg",
+  craftsmanshipClosing: "We focus on every detail - from flooring to ceiling, lighting to furniture - to deliver a complete royal palace-style heritage experience.",
+  contactPhone: "9414228829, 7850015839",
+  contactEmail: "rathoreheritagedevelopers@gmail.com",
+  instagram: "rh_heritagebuilds",
+  brandStatement: "Preserving Royal Legacy Through Timeless Heritage Architecture.",
+  footerMotto: "ROYAL • TIMELESS • AUTHENTIC • ARCHITECTURAL"
+};
+
+const DEFAULT_PROJECTS = [
+  {
+    name: "Oladar Haveli",
+    slug: "oladar-haveli",
+    location: "Udaipur",
+    type: "Heritage Haveli Construction",
+    shortDescription: "The Oladar Haveli project has been designed and executed in a complete traditional heritage style, while ensuring modern structural strength, quality control, and durability from foundation to final finishing.",
+    fullDescription: "The Oladar Haveli project has been designed and executed in a complete traditional heritage style, while ensuring modern structural strength, quality control, and durability from foundation to final finishing.\n\nThe project combines traditional Rajasthani heritage architecture with modern civil engineering standards to ensure both aesthetic beauty and structural safety.\n\nThe Oladar Haveli project represents a perfect blend of traditional heritage craftsmanship and modern civil engineering quality standards, ensuring both royal elegance and long-term structural performance.",
+    featuredImage: "assets/oladar-haveli-1.jpg",
+    galleryImages: [
+      { url: "assets/oladar-haveli-1.jpg", caption: "Grand Heritage Entry (Dodi / Main Entrance Gate)", alt: "Oladar Haveli Entrance Dodi" },
+      { url: "assets/oladar-haveli-2.jpg", caption: "Traditional Jharokha Design & Architectural Facade", alt: "Oladar Haveli Facade" },
+      { url: "assets/oladar-haveli-3.jpg", caption: "Ceiling Design – Mor Pankh Work & Thekri Glass", alt: "Oladar Haveli Ceiling Art" },
+      { url: "assets/oladar-haveli-4.jpg", caption: "Ghokda Style Domes & Rooftop Heritage Bar", alt: "Oladar Haveli Terrace Domes" },
+      { url: "assets/oladar-haveli-5.jpg", caption: "Heritage Carved Furniture & Jhomer Chandeliers", alt: "Oladar Haveli Interior Furniture" }
+    ],
+    architecturalElements: [
+      { title: "Grand Heritage Entry (Dodi / Main Door)", description: "A grand traditional Heritage Dodi (Main Entrance Gate) has been constructed at the entrance, creating a royal first impression of the haveli." },
+      { title: "Thekri Glass Work", description: "Intricate Thekri glass work has been executed on interior ceilings, inside decorative Aaliya, and in the heritage-style bar area. This glass inlay work enhances light reflection and gives a royal palace finish." },
+      { title: "Ceiling Design – Mor Pankh Work", description: "The ceilings feature detailed Mor Pankh (Peacock Feather) themed artwork, reflecting traditional Rajasthani craftsmanship. The ceiling interiors have been intricately designed using traditional Pipla Patti and Tordi detailing, enhancing the authentic heritage aesthetic of the space." },
+      { title: "Domes (Ghokda Style)", description: "Three domes have been constructed on the terrace level, locally known as Ghokda style domes to enhance traditional design and maintain authentic heritage architecture." },
+      { title: "Heritage Bar & Staircase", description: "A heritage-style bar has been constructed on the terrace with rooftop sitting. The bar area includes detailed glass inlay work. The staircase design follows traditional architectural elements while maintaining safety and structural balance." },
+      { title: "Flooring & Finishing", description: "Premium white marble flooring has been used throughout the haveli. Marble borders are finished with Khajur Patti detailing, enhancing the traditional appearance. Proper base preparation, leveling, and joint finishing were ensured for durability and long life." },
+      { title: "Furniture & Interior Heritage Elements", description: "All rooms include Carving furniture with different authentic heritage styles. Behind each bed, a heritage-style decorative pillar has been installed on the wall, enhancing the royal ambiance. Each room features a heritage-style Jhomer (chandelier). The reception area includes three chandeliers (one large and two smaller) for a grand visual impact." }
+    ]
+  },
+  {
+    name: "Roopmahal",
+    slug: "roopmahal",
+    location: "Udaipur",
+    type: "Luxury Heritage Villa",
+    shortDescription: "A magnificent heritage-style project inspired by the timeless architecture of Rajasthan.",
+    fullDescription: "Roop Mahal is a magnificent heritage-style project inspired by the timeless architecture of Rajasthan.\n\nThe exterior showcases beautifully crafted heritage-style windows, traditional arches, and elegant façade detailing that reflects the charm of royal havelis.\n\nThe space highlights intricate glass inlay work, artistic carvings, and classic heritage furniture that enhance the royal character of the project.\n\nEvery element, from the architectural details to the interior craftsmanship, has been thoughtfully designed to create an authentic heritage ambiance while maintaining luxury and elegance.",
+    featuredImage: "assets/roop-mahal-1.jpg",
+    galleryImages: [
+      { url: "assets/roop-mahal-1.jpg", caption: "Heritage-style Windows, Traditional Arches & Facade", alt: "Roop Mahal Facade" }
+    ],
+    architecturalElements: [
+      { title: "Architectural Windows & Arches", description: "Beautifully crafted heritage-style windows, traditional arches, and elegant façade detailing reflecting the charm of royal havelis." },
+      { title: "Glass Inlay & Artistic Carvings", description: "Intricate glass inlay work, artistic stone and wood carvings, and classic heritage furniture that enhance royal character." }
+    ]
+  },
+  {
+    name: "Mohan Villa",
+    slug: "mohan-villa",
+    location: "Udaipur",
+    type: "Heritage Style Villa / Farmhouse",
+    shortDescription: "Luxurious heritage-style villa inspired by the traditional architecture of Rajasthani havelis.",
+    fullDescription: "Mohan Villa is a luxurious heritage-style villa inspired by the traditional architecture of Rajasthani havelis.\n\nThe design showcases beautifully carved arches, decorative wall artwork, and vibrant stained glass windows that enhance natural light and create a royal ambiance.\n\nThe interiors feature intricately crafted heritage furniture with an antique silver finish, adding a palace-like elegance to the living spaces.\n\nElements such as traditional jharokha-style windows, detailed ceiling artwork, and handcrafted décor reflect the timeless craftsmanship and cultural richness of Rajasthan’s royal heritage.",
+    featuredImage: "assets/mohan-villa-1.jpg",
+    galleryImages: [
+      { url: "assets/mohan-villa-1.jpg", caption: "Carved Arches, Stained Glass & Antique Silver Furniture", alt: "Mohan Villa Interior" }
+    ],
+    architecturalElements: [
+      { title: "Carved Arches & Stained Glass", description: "Beautifully carved arches, decorative wall artwork, and vibrant stained glass windows that enhance natural light and create royal ambiance." },
+      { title: "Antique Silver Finish Furniture", description: "Intricately crafted heritage furniture with an antique silver finish, adding palace-like elegance to the living spaces." },
+      { title: "Traditional Jharokhas & Ceilings", description: "Traditional jharokha-style windows, detailed ceiling artwork, and handcrafted décor reflecting the timeless cultural richness of Rajasthan." }
+    ]
+  },
+  {
+    name: "First Impression Salon",
+    slug: "first-impression-salon",
+    location: "Udaipur",
+    type: "Premium Commercial Interior",
+    shortDescription: "A luxurious heritage-themed salon inspired by the royal charm of Rajasthan.",
+    fullDescription: "First Impression Salon is a luxurious heritage-themed salon inspired by the royal charm of Rajasthan.\n\nThe space features heritage-style interiors, traditional furniture, Belgium glass work, and intricate Thekri glass work, reflecting authentic royal craftsmanship.\n\nClassic detailing, artistic elements, and elegant wordings enhance the regal ambiance, creating a premium grooming space with a true touch of heritage elegance.",
+    featuredImage: "assets/first-impression-salon-1.jpg",
+    galleryImages: [
+      { url: "assets/first-impression-salon-1.jpg", caption: "Belgium Glass Work & Intricate Thekri Glass Inlay", alt: "First Impression Salon Interior" }
+    ],
+    architecturalElements: [
+      { title: "Belgium Glass & Thekri Work", description: "Intricate Thekri glass artistry and premium Belgium glass work providing authentic royal reflection and elegance." },
+      { title: "Regal Commercial Ambiance", description: "Classic detailing, traditional furniture, and heritage interior architecture tailored for luxury commercial experiences." }
+    ]
+  }
+];
+
+const DEFAULT_CRAFTSMANSHIP = [
+  { title: "Complete Heritage Building & Room Transformation", description: "Turnkey structural and architectural heritage transformations.", icon: "🏛️" },
+  { title: "Traditional Jharokha Design & Architectural Elements", description: "Bespoke stone and timber jharokha balconies and cornices.", icon: "🪟" },
+  { title: "Pipal Patti & Aasnot Patti Wall Detailing", description: "Intricate traditional wall trims and relief plaster detailing.", icon: "🌿" },
+  { title: "Thekari Glass & Premium Belgium Glass Work", description: "Exquisite hand-cut convex/concave mirror and glass mosaics.", icon: "✨" },
+  { title: "Royal Chandeliers (Jhumer) & Antique Wall Lighting", description: "Magnificent palace-style illumination and chandeliers.", icon: "💡" },
+  { title: "Hanging Lights & Palace-Style Illumination", description: "Atmospheric traditional ambient lighting design.", icon: "🏮" },
+  { title: "Handcrafted Paintings & Intricate Carving", description: "Royal fresco artistry and master stone/wood relief carving.", icon: "🎨" },
+  { title: "Custom Heritage Furniture", description: "Carved Furniture, Ottoman, Study Tables, and Bedroom Sets.", icon: "🛋️" },
+  { title: "Royal Curtains & Interior Styling", description: "Regal textiles, royal drapery, and curated heritage accents.", icon: "👑" },
+  { title: "Heritage Flooring & Decorative Ceiling Work", description: "Khajur Patti marble borders and Mor Pankh ceiling artistry.", icon: "🏛️" }
+];
+
+const DEFAULT_SERVICES = [
+  {
+    title: "Heritage Haveli Construction",
+    description: "Complete traditional haveli development with authentic architectural detailing and strong structural execution.",
+    icon: "🏰"
+  },
+  {
+    title: "Luxury Heritage Villas",
+    description: "Royal-style villas designed with heritage aesthetics and modern civil engineering standards.",
+    icon: "🏛️"
+  },
+  {
+    title: "Palace-Style Farmhouse Development",
+    description: "Grand farmhouse projects featuring domes, carved stonework, decorative pillars, and heritage ceilings.",
+    icon: "🏡"
+  },
+  {
+    title: "Heritage Hotels & Resort Development",
+    description: "Culturally rich hospitality spaces crafted with traditional craftsmanship and premium finishing.",
+    icon: "🏨"
+  },
+  {
+    title: "Premium Heritage Commercial Interiors",
+    description: "Heritage-inspired interior solutions including Thekri glass work, Heritage Dodi, Mor Pankh ceilings, Jhomer chandeliers, carved furniture, and customized royal detailing.",
+    icon: "✨"
+  }
+];
+
+const DEFAULT_ENQUIRIES = [
+  {
+    _id: "demo-enq-1",
+    name: "Maharaja Vikramaditya Singh",
+    phone: "9414228829",
+    email: "vikram@heritagevilla.in",
+    projectType: "Heritage Haveli Construction",
+    message: "Interested in constructing a 4-suite traditional haveli with Thekri glass ceiling work and Ghokda domes in Udaipur.",
+    status: "new",
+    createdAt: new Date().toISOString()
+  }
+];
+
+// LocalStorage helpers
+function getStored(key, fallback) {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+function setStored(key, val) {
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch (e) {
+    console.warn("Storage error:", e);
+  }
+}
+
+// ==================== AUTHENTICATION & MODES ====================
 function authHeaders() {
   return {
     "Content-Type": "application/json",
@@ -39,20 +206,66 @@ async function handleLogin(e) {
     if (res.ok && data.token) {
       token = data.token;
       localStorage.setItem("rh_admin_token", token);
+      localStorage.removeItem("rh_offline_mode");
+      isOfflineMode = false;
       showApp();
     } else {
       alert(data.message || "Invalid credentials.");
     }
   } catch (err) {
-    alert("Could not connect to API at " + API + ". Please ensure the backend server is running.");
+    console.warn("Backend not reachable at " + API + ":", err);
+    if (confirm("Could not connect to backend at " + API + ".\n\n(Browsers block http:// calls on live https:// GitHub Pages).\n\nWould you like to enter Offline Demo Mode directly? Full CMS management and preview are enabled locally in your browser!")) {
+      enterOfflineMode();
+    }
   } finally {
     btn.textContent = "SIGN IN TO CMS →";
     btn.disabled = false;
   }
 }
 
+function enterOfflineMode() {
+  token = "offline-demo-token";
+  isOfflineMode = true;
+  localStorage.setItem("rh_admin_token", token);
+  localStorage.setItem("rh_offline_mode", "true");
+  showApp();
+}
+
+function saveCustomApiUrl() {
+  const input = document.getElementById("customApiUrl");
+  const val = input ? input.value.trim() : "";
+  if (!val) {
+    localStorage.removeItem("rh_api_url");
+    alert("Reset API URL to default (http://localhost:5000/api)");
+  } else {
+    const cleanUrl = val.replace(/\/+$/, "");
+    localStorage.setItem("rh_api_url", cleanUrl);
+    localStorage.removeItem("rh_offline_mode");
+    alert("Saved Backend API URL: " + cleanUrl);
+  }
+  location.reload();
+}
+
+function openApiSettingsPrompt() {
+  const current = localStorage.getItem("rh_api_url") || API;
+  const newUrl = prompt("Enter your live Backend API Endpoint URL:\n(e.g., https://rathore-heritage-api.onrender.com/api)\nLeave empty to reset to default localhost:5000/api", current);
+  if (newUrl !== null) {
+    if (newUrl.trim() === "") {
+      localStorage.removeItem("rh_api_url");
+      alert("Reset API URL to default.");
+    } else {
+      const clean = newUrl.trim().replace(/\/+$/, "");
+      localStorage.setItem("rh_api_url", clean);
+      localStorage.removeItem("rh_offline_mode");
+      alert("Backend API URL set to: " + clean);
+    }
+    location.reload();
+  }
+}
+
 function logout() {
   localStorage.removeItem("rh_admin_token");
+  localStorage.removeItem("rh_offline_mode");
   token = null;
   location.reload();
 }
@@ -100,56 +313,85 @@ async function showApp() {
 }
 
 async function refreshStats() {
-  try {
-    const res = await fetch(`${API}/admin/stats`, { headers: authHeaders() });
-    if (!res.ok) throw new Error("Stats fetch failed");
-    const data = await res.json();
+  const dbBadge = document.getElementById("dbStatus");
 
-    document.getElementById("statProjects").textContent = data.totalProjects || 0;
-    document.getElementById("statImages").textContent = data.totalImages || 0;
-    document.getElementById("statEnquiries").textContent = data.totalEnquiries || 0;
-    document.getElementById("statNewEnquiries").textContent = data.newEnquiries || 0;
-    document.getElementById("newBadge").textContent = data.newEnquiries || 0;
+  if (!isOfflineMode) {
+    try {
+      const res = await fetch(`${API}/admin/stats`, { headers: authHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById("statProjects").textContent = data.totalProjects || 0;
+        document.getElementById("statImages").textContent = data.totalImages || 0;
+        document.getElementById("statEnquiries").textContent = data.totalEnquiries || 0;
+        document.getElementById("statNewEnquiries").textContent = data.newEnquiries || 0;
+        document.getElementById("newBadge").textContent = data.newEnquiries || 0;
 
-    const dbBadge = document.getElementById("dbStatus");
-    if (data.dbConnected) {
-      dbBadge.className = "db-status-badge";
-      dbBadge.innerHTML = "<span>●</span> MongoDB Connected (Live)";
-    } else {
-      dbBadge.className = "db-status-badge offline";
-      dbBadge.innerHTML = "<span>●</span> Local Storage (Atlas Sync Pending)";
+        if (data.dbConnected) {
+          dbBadge.className = "db-status-badge";
+          dbBadge.innerHTML = "<span>●</span> MongoDB Connected (Live)";
+        } else {
+          dbBadge.className = "db-status-badge offline";
+          dbBadge.innerHTML = "<span>●</span> Local Server (Atlas Sync Pending)";
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn("Stats API unreachable, calculating from local store:", e);
     }
-  } catch (e) {
-    console.warn("Stats refresh error:", e);
   }
+
+  // Offline Mode stats calculation
+  const projects = getStored("rh_offline_projects", DEFAULT_PROJECTS);
+  const enquiries = getStored("rh_offline_enquiries", DEFAULT_ENQUIRIES);
+  const totalImgs = projects.reduce((acc, p) => acc + (p.galleryImages ? p.galleryImages.length : 0), 0);
+  const newEnqCount = enquiries.filter(e => e.status === "new").length;
+
+  document.getElementById("statProjects").textContent = projects.length;
+  document.getElementById("statImages").textContent = totalImgs;
+  document.getElementById("statEnquiries").textContent = enquiries.length;
+  document.getElementById("statNewEnquiries").textContent = newEnqCount;
+  document.getElementById("newBadge").textContent = newEnqCount;
+
+  dbBadge.className = "db-status-badge offline";
+  dbBadge.innerHTML = "<span>●</span> Offline Browser Mode";
 }
 
 // ==================== WEBSITE CONTENT MANAGEMENT ====================
 async function loadSiteContent() {
-  try {
-    const res = await fetch(`${API}/admin/site`, { headers: authHeaders() });
-    if (!res.ok) throw new Error();
-    currentSite = await res.json();
+  currentSite = null;
 
-    document.getElementById("cfgEyebrow").value = currentSite.heroEyebrow || "";
-    document.getElementById("cfgHeroTitle").value = currentSite.heroTitle || "";
-    document.getElementById("cfgHeroSubtitle").value = currentSite.heroSubtitle || "";
-    document.getElementById("cfgHeroImage").value = currentSite.heroImage || "";
-    document.getElementById("cfgAboutTitle").value = currentSite.aboutTitle || "";
-    document.getElementById("cfgAboutContent").value = currentSite.aboutContent || "";
-    document.getElementById("cfgAboutImage").value = currentSite.aboutImage || "";
-    document.getElementById("cfgPhone").value = currentSite.contactPhone || "";
-    document.getElementById("cfgEmail").value = currentSite.contactEmail || "";
-    document.getElementById("cfgInstagram").value = currentSite.instagram || "";
-    document.getElementById("cfgBrandStatement").value = currentSite.brandStatement || "";
-    document.getElementById("cfgFooterMotto").value = currentSite.footerMotto || "";
-  } catch (e) {
-    console.warn("Load site content error:", e);
+  if (!isOfflineMode) {
+    try {
+      const res = await fetch(`${API}/admin/site`, { headers: authHeaders() });
+      if (res.ok) {
+        currentSite = await res.json();
+      }
+    } catch (e) {
+      console.warn("Using offline site content:", e);
+    }
   }
+
+  if (!currentSite) {
+    currentSite = getStored("rh_offline_site", DEFAULT_SITE);
+  }
+
+  document.getElementById("cfgEyebrow").value = currentSite.heroEyebrow || "";
+  document.getElementById("cfgHeroTitle").value = currentSite.heroTitle || "";
+  document.getElementById("cfgHeroSubtitle").value = currentSite.heroSubtitle || "";
+  document.getElementById("cfgHeroImage").value = currentSite.heroImage || "";
+  document.getElementById("cfgAboutTitle").value = currentSite.aboutTitle || "";
+  document.getElementById("cfgAboutContent").value = currentSite.aboutContent || "";
+  document.getElementById("cfgAboutImage").value = currentSite.aboutImage || "";
+  document.getElementById("cfgPhone").value = currentSite.contactPhone || "";
+  document.getElementById("cfgEmail").value = currentSite.contactEmail || "";
+  document.getElementById("cfgInstagram").value = currentSite.instagram || "";
+  document.getElementById("cfgBrandStatement").value = currentSite.brandStatement || "";
+  document.getElementById("cfgFooterMotto").value = currentSite.footerMotto || "";
 }
 
 async function saveSiteSettings() {
   const updateData = {
+    ...currentSite,
     heroEyebrow: document.getElementById("cfgEyebrow").value,
     heroTitle: document.getElementById("cfgHeroTitle").value,
     heroSubtitle: document.getElementById("cfgHeroSubtitle").value,
@@ -164,29 +406,47 @@ async function saveSiteSettings() {
     footerMotto: document.getElementById("cfgFooterMotto").value
   };
 
-  try {
-    const res = await fetch(`${API}/admin/site`, {
-      method: "PUT",
-      headers: authHeaders(),
-      body: JSON.stringify(updateData)
-    });
-    if (!res.ok) throw new Error("Save failed");
-    alert("✅ Website content saved to MongoDB successfully!");
-  } catch (e) {
-    alert("❌ Error saving content: " + e.message);
+  currentSite = updateData;
+  setStored("rh_offline_site", updateData);
+
+  if (!isOfflineMode) {
+    try {
+      const res = await fetch(`${API}/admin/site`, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify(updateData)
+      });
+      if (res.ok) {
+        alert("✅ Website content saved to MongoDB Atlas successfully!");
+        return;
+      }
+    } catch (e) {
+      console.warn("API save failed, preserved locally:", e);
+    }
   }
+
+  alert("✅ Website content saved in browser storage! Changes will reflect in live preview.");
 }
 
-// ==================== PROJECTS MANAGEMENT ====================
 async function loadProjects() {
-  try {
-    const res = await fetch(`${API}/admin/projects`, { headers: authHeaders() });
-    if (!res.ok) throw new Error();
-    currentProjects = await res.json();
-    renderProjectsTable(currentProjects);
-  } catch (e) {
-    console.warn("Load projects error:", e);
+  currentProjects = [];
+
+  if (!isOfflineMode) {
+    try {
+      const res = await fetch(`${API}/admin/projects`, { headers: authHeaders() });
+      if (res.ok) {
+        currentProjects = await res.json();
+      }
+    } catch (e) {
+      console.warn("Using offline projects data:", e);
+    }
   }
+
+  if (!currentProjects || currentProjects.length === 0) {
+    currentProjects = getStored("rh_offline_projects", DEFAULT_PROJECTS);
+  }
+
+  renderProjectsTable(currentProjects);
 }
 
 function renderProjectsTable(projects) {
@@ -357,71 +617,93 @@ async function handleSaveProject(e) {
     published: true
   };
 
-  try {
-    let res;
-    if (id) {
-      res = await fetch(`${API}/admin/projects/${id}`, {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify(payload)
-      });
-    } else {
-      res = await fetch(`${API}/admin/projects`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify(payload)
-      });
-    }
+  if (!isOfflineMode) {
+    try {
+      const res = id
+        ? await fetch(`${API}/admin/projects/${id}`, { method: "PUT", headers: authHeaders(), body: JSON.stringify(payload) })
+        : await fetch(`${API}/admin/projects`, { method: "POST", headers: authHeaders(), body: JSON.stringify(payload) });
 
-    if (!res.ok) throw new Error("Project save failed");
-    alert("✅ Project saved successfully!");
-    closeProjectModal();
-    await loadProjects();
-    await refreshStats();
-  } catch (err) {
-    alert("❌ Error saving project: " + err.message);
+      if (res.ok) {
+        alert("✅ Project saved to MongoDB successfully!");
+        closeProjectModal();
+        await loadProjects();
+        await refreshStats();
+        return;
+      }
+    } catch (err) {
+      console.warn("API project save failed, falling back to browser storage:", err);
+    }
   }
+
+  // Offline fallback
+  const existingIdx = currentProjects.findIndex(p => (p._id && p._id === id) || p.slug === (id || slug));
+  if (existingIdx >= 0) {
+    currentProjects[existingIdx] = { ...currentProjects[existingIdx], ...payload };
+  } else {
+    currentProjects.unshift({ _id: "local-" + Date.now(), ...payload });
+  }
+
+  setStored("rh_offline_projects", currentProjects);
+  alert("✅ Project saved in browser storage!");
+  closeProjectModal();
+  renderProjectsTable(currentProjects);
+  await refreshStats();
 }
 
 async function deleteProject(id) {
-  if (!confirm("Are you sure you want to permanently delete this project?")) return;
+  if (!confirm("Are you sure you want to delete this project?")) return;
 
-  try {
-    const res = await fetch(`${API}/admin/projects/${id}`, {
-      method: "DELETE",
-      headers: authHeaders()
-    });
-    if (!res.ok) throw new Error("Delete failed");
-    alert("Project deleted.");
-    await loadProjects();
-    await refreshStats();
-  } catch (e) {
-    alert("Error deleting project: " + e.message);
+  if (!isOfflineMode) {
+    try {
+      const res = await fetch(`${API}/admin/projects/${id}`, { method: "DELETE", headers: authHeaders() });
+      if (res.ok) {
+        alert("Project deleted from MongoDB.");
+        await loadProjects();
+        await refreshStats();
+        return;
+      }
+    } catch (e) {
+      console.warn("API delete failed, deleting locally:", e);
+    }
   }
+
+  currentProjects = currentProjects.filter(p => p._id !== id && p.slug !== id);
+  setStored("rh_offline_projects", currentProjects);
+  renderProjectsTable(currentProjects);
+  await refreshStats();
+  alert("Project deleted locally.");
 }
 
 // ==================== CRAFTSMANSHIP & SERVICES ====================
 async function loadCraftsmanship() {
-  try {
-    const res = await fetch(`${API}/craftsmanship`);
-    if (!res.ok) throw new Error();
-    currentCraftsmanship = await res.json();
-    const container = document.getElementById("craftList");
-    container.innerHTML = currentCraftsmanship.map((c, i) => `
-      <div class="element-block">
-        <div style="display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;">
-          <input type="text" id="cIcon${i}" value="${c.icon || '🏛️'}" style="text-align:center;">
-          <input type="text" id="cTitle${i}" value="${escapeHtml(c.title || '')}" style="font-weight:600;">
-        </div>
-        <input type="text" id="cDesc${i}" value="${escapeHtml(c.description || '')}" placeholder="Description" style="margin-top:8px;">
-      </div>
-    `).join("");
+  currentCraftsmanship = [];
 
-    if (currentSite) {
-      document.getElementById("cfgCraftClosing").value = currentSite.craftsmanshipClosing || "";
+  if (!isOfflineMode) {
+    try {
+      const res = await fetch(`${API}/craftsmanship`);
+      if (res.ok) currentCraftsmanship = await res.json();
+    } catch (e) {
+      console.warn("Using offline craftsmanship:", e);
     }
-  } catch (e) {
-    console.warn("Load craftsmanship error:", e);
+  }
+
+  if (!currentCraftsmanship || currentCraftsmanship.length === 0) {
+    currentCraftsmanship = getStored("rh_offline_craft", DEFAULT_CRAFTSMANSHIP);
+  }
+
+  const container = document.getElementById("craftList");
+  container.innerHTML = currentCraftsmanship.map((c, i) => `
+    <div class="element-block">
+      <div style="display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;">
+        <input type="text" id="cIcon${i}" value="${c.icon || '🏛️'}" style="text-align:center;">
+        <input type="text" id="cTitle${i}" value="${escapeHtml(c.title || '')}" style="font-weight:600;">
+      </div>
+      <input type="text" id="cDesc${i}" value="${escapeHtml(c.description || '')}" placeholder="Description" style="margin-top:8px;">
+    </div>
+  `).join("");
+
+  if (currentSite) {
+    document.getElementById("cfgCraftClosing").value = currentSite.craftsmanshipClosing || "";
   }
 }
 
@@ -435,41 +717,52 @@ async function saveCraftsmanship() {
 
   const closingText = document.getElementById("cfgCraftClosing").value;
 
-  try {
-    await fetch(`${API}/admin/craftsmanship`, {
-      method: "PUT",
-      headers: authHeaders(),
-      body: JSON.stringify({ items })
-    });
-    await fetch(`${API}/admin/site`, {
-      method: "PUT",
-      headers: authHeaders(),
-      body: JSON.stringify({ craftsmanshipClosing: closingText })
-    });
-    alert("✅ Craftsmanship items saved!");
-  } catch (e) {
-    alert("Error saving craftsmanship: " + e.message);
+  setStored("rh_offline_craft", items);
+  if (currentSite) {
+    currentSite.craftsmanshipClosing = closingText;
+    setStored("rh_offline_site", currentSite);
   }
+
+  if (!isOfflineMode) {
+    try {
+      await fetch(`${API}/admin/craftsmanship`, { method: "PUT", headers: authHeaders(), body: JSON.stringify({ items }) });
+      await fetch(`${API}/admin/site`, { method: "PUT", headers: authHeaders(), body: JSON.stringify({ craftsmanshipClosing: closingText }) });
+      alert("✅ Craftsmanship items saved to MongoDB Atlas!");
+      return;
+    } catch (e) {
+      console.warn("API save craftsmanship failed:", e);
+    }
+  }
+
+  alert("✅ Craftsmanship items saved in browser storage!");
 }
 
 async function loadServices() {
-  try {
-    const res = await fetch(`${API}/services`);
-    if (!res.ok) throw new Error();
-    currentServices = await res.json();
-    const container = document.getElementById("servicesList");
-    container.innerHTML = currentServices.map((s, i) => `
-      <div class="element-block">
-        <div style="display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;">
-          <input type="text" id="sIcon${i}" value="${s.icon || '🏰'}" style="text-align:center;">
-          <input type="text" id="sTitle${i}" value="${escapeHtml(s.title || '')}" style="font-weight:600;">
-        </div>
-        <textarea id="sDesc${i}" rows="2" style="margin-top:8px;">${escapeHtml(s.description || '')}</textarea>
-      </div>
-    `).join("");
-  } catch (e) {
-    console.warn("Load services error:", e);
+  currentServices = [];
+
+  if (!isOfflineMode) {
+    try {
+      const res = await fetch(`${API}/services`);
+      if (res.ok) currentServices = await res.json();
+    } catch (e) {
+      console.warn("Using offline services:", e);
+    }
   }
+
+  if (!currentServices || currentServices.length === 0) {
+    currentServices = getStored("rh_offline_services", DEFAULT_SERVICES);
+  }
+
+  const container = document.getElementById("servicesList");
+  container.innerHTML = currentServices.map((s, i) => `
+    <div class="element-block">
+      <div style="display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;">
+        <input type="text" id="sIcon${i}" value="${s.icon || '🏰'}" style="text-align:center;">
+        <input type="text" id="sTitle${i}" value="${escapeHtml(s.title || '')}" style="font-weight:600;">
+      </div>
+      <textarea id="sDesc${i}" rows="2" style="margin-top:8px;">${escapeHtml(s.description || '')}</textarea>
+    </div>
+  `).join("");
 }
 
 async function saveServices() {
@@ -480,28 +773,39 @@ async function saveServices() {
     order: i + 1
   }));
 
-  try {
-    await fetch(`${API}/admin/services`, {
-      method: "PUT",
-      headers: authHeaders(),
-      body: JSON.stringify({ items })
-    });
-    alert("✅ Services saved successfully!");
-  } catch (e) {
-    alert("Error saving services: " + e.message);
+  setStored("rh_offline_services", items);
+
+  if (!isOfflineMode) {
+    try {
+      await fetch(`${API}/admin/services`, { method: "PUT", headers: authHeaders(), body: JSON.stringify({ items }) });
+      alert("✅ Services saved to MongoDB Atlas!");
+      return;
+    } catch (e) {
+      console.warn("API save services failed:", e);
+    }
   }
+
+  alert("✅ Services saved in browser storage!");
 }
 
 // ==================== ENQUIRIES MANAGEMENT ====================
 async function loadEnquiries() {
-  try {
-    const res = await fetch(`${API}/admin/enquiries`, { headers: authHeaders() });
-    if (!res.ok) throw new Error();
-    currentEnquiries = await res.json();
-    renderEnquiries(currentEnquiries);
-  } catch (e) {
-    console.warn("Load enquiries error:", e);
+  currentEnquiries = [];
+
+  if (!isOfflineMode) {
+    try {
+      const res = await fetch(`${API}/admin/enquiries`, { headers: authHeaders() });
+      if (res.ok) currentEnquiries = await res.json();
+    } catch (e) {
+      console.warn("Using offline enquiries:", e);
+    }
   }
+
+  if (!currentEnquiries || currentEnquiries.length === 0) {
+    currentEnquiries = getStored("rh_offline_enquiries", DEFAULT_ENQUIRIES);
+  }
+
+  renderEnquiries(currentEnquiries);
 }
 
 function renderEnquiries(enquiries) {
@@ -544,31 +848,50 @@ function renderEnquiries(enquiries) {
 }
 
 async function updateEnquiryStatus(id, status) {
-  try {
-    await fetch(`${API}/admin/enquiries/${id}`, {
-      method: "PUT",
-      headers: authHeaders(),
-      body: JSON.stringify({ status })
-    });
-    await loadEnquiries();
-    await refreshStats();
-  } catch (e) {
-    alert("Error updating status: " + e.message);
+  if (!isOfflineMode) {
+    try {
+      const res = await fetch(`${API}/admin/enquiries/${id}`, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        await loadEnquiries();
+        await refreshStats();
+        return;
+      }
+    } catch (e) {
+      console.warn("API enquiry update failed:", e);
+    }
   }
+
+  const enq = currentEnquiries.find(e => e._id === id);
+  if (enq) enq.status = status;
+  setStored("rh_offline_enquiries", currentEnquiries);
+  renderEnquiries(currentEnquiries);
+  await refreshStats();
 }
 
 async function deleteEnquiry(id) {
   if (!confirm("Delete this enquiry?")) return;
-  try {
-    await fetch(`${API}/admin/enquiries/${id}`, {
-      method: "DELETE",
-      headers: authHeaders()
-    });
-    await loadEnquiries();
-    await refreshStats();
-  } catch (e) {
-    alert("Error deleting enquiry: " + e.message);
+
+  if (!isOfflineMode) {
+    try {
+      const res = await fetch(`${API}/admin/enquiries/${id}`, { method: "DELETE", headers: authHeaders() });
+      if (res.ok) {
+        await loadEnquiries();
+        await refreshStats();
+        return;
+      }
+    } catch (e) {
+      console.warn("API delete enquiry failed:", e);
+    }
   }
+
+  currentEnquiries = currentEnquiries.filter(e => e._id !== id);
+  setStored("rh_offline_enquiries", currentEnquiries);
+  renderEnquiries(currentEnquiries);
+  await refreshStats();
 }
 
 // ==================== IMAGE UPLOADER ====================
@@ -577,42 +900,65 @@ async function handleImageUpload(e) {
   const fileInput = document.getElementById("imageFileInput");
   if (!fileInput.files || fileInput.files.length === 0) return;
 
-  const formData = new FormData();
-  formData.append("image", fileInput.files[0]);
+  const file = fileInput.files[0];
 
-  try {
-    const res = await fetch(`${API}/admin/upload`, {
-      method: "POST",
-      headers: token ? { "Authorization": `Bearer ${token}` } : {},
-      body: formData
-    });
-    const data = await res.json();
+  if (!isOfflineMode) {
+    const formData = new FormData();
+    formData.append("image", file);
 
-    if (res.ok && data.url) {
-      document.getElementById("uploadedUrlInput").value = data.url;
-      document.getElementById("uploadedPreview").src = data.url;
-      document.getElementById("uploadResult").classList.remove("hidden");
-      alert("✅ Image uploaded successfully!");
-      fileInput.value = "";
-    } else {
-      alert("Upload failed: " + (data.message || "Unknown error"));
+    try {
+      const res = await fetch(`${API}/admin/upload`, {
+        method: "POST",
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
+        body: formData
+      });
+      const data = await res.json();
+
+      if (res.ok && data.url) {
+        document.getElementById("uploadedUrlInput").value = data.url;
+        document.getElementById("uploadedPreview").src = data.url;
+        document.getElementById("uploadResult").classList.remove("hidden");
+        alert("✅ Image uploaded to server!");
+        fileInput.value = "";
+        return;
+      }
+    } catch (err) {
+      console.warn("API upload failed, converting to local data URI:", err);
     }
-  } catch (err) {
-    alert("Upload error: " + err.message);
   }
+
+  // Offline base64 data URI conversion
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const dataUrl = evt.target.result;
+    document.getElementById("uploadedUrlInput").value = dataUrl;
+    document.getElementById("uploadedPreview").src = dataUrl;
+    document.getElementById("uploadResult").classList.remove("hidden");
+    alert("✅ Image prepared as local Data URI (Ready to copy and paste into projects)!");
+    fileInput.value = "";
+  };
+  reader.readAsDataURL(file);
 }
 
 function copyUploadedUrl() {
   const copyText = document.getElementById("uploadedUrlInput");
   copyText.select();
   navigator.clipboard.writeText(copyText.value);
-  alert("Copied URL to clipboard: " + copyText.value);
+  alert("Copied URL to clipboard!");
 }
 
 // Helper
 function escapeHtml(x) {
   return String(x || "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
 }
+
+// Pre-fill API settings input if previously configured
+window.addEventListener("DOMContentLoaded", () => {
+  const apiInput = document.getElementById("customApiUrl");
+  if (apiInput) {
+    apiInput.value = localStorage.getItem("rh_api_url") || "";
+  }
+});
 
 // Auto-login if token already in localStorage
 if (token) {

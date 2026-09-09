@@ -4,7 +4,7 @@
 // Compatible with GitHub Pages (HashRouter Architecture) & Live MongoDB APIs
 // ==========================================================================
 
-const API_BASE = window.API_URL || "http://localhost:5000/api";
+const API_BASE = localStorage.getItem("rh_api_url") || window.API_URL || "http://localhost:5000/api";
 
 // PDF Fallback Data (Guarantees zero downtime even offline)
 const FALLBACK_SITE = {
@@ -565,10 +565,27 @@ function Contact({ site }) {
         setStatus({ submitting: false, msg: data.message || "Failed to submit enquiry.", type: "error" });
       }
     } catch (err) {
+      try {
+        const localEnqs = JSON.parse(localStorage.getItem("rh_offline_enquiries") || "[]");
+        localEnqs.unshift({
+          _id: "client-" + Date.now(),
+          ...formData,
+          status: "new",
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem("rh_offline_enquiries", JSON.stringify(localEnqs));
+      } catch (e) {}
       setStatus({
         submitting: false,
         msg: "Dhanyawad! Your message was recorded. Our team will contact you promptly.",
         type: "success"
+      });
+      setFormData({
+        name: "",
+        phone: "",
+        email: "",
+        projectType: "Heritage Haveli Construction",
+        message: ""
       });
     }
   };
@@ -763,13 +780,34 @@ function App() {
     return () => window.removeEventListener("hashchange", handleHash);
   }, []);
 
-  // Sync Live Data from Backend MongoDB API
+  // Sync Live Data from Backend MongoDB API or offline cache
   React.useEffect(() => {
+    // Check localStorage offline cache first
+    try {
+      const cachedSite = localStorage.getItem("rh_offline_site");
+      if (cachedSite) setSite(prev => ({ ...prev, ...JSON.parse(cachedSite) }));
+      const cachedProjects = localStorage.getItem("rh_offline_projects");
+      if (cachedProjects) {
+        const parsed = JSON.parse(cachedProjects);
+        if (Array.isArray(parsed) && parsed.length > 0) setProjects(parsed);
+      }
+      const cachedCraft = localStorage.getItem("rh_offline_craft");
+      if (cachedCraft) {
+        const parsed = JSON.parse(cachedCraft);
+        if (Array.isArray(parsed) && parsed.length > 0) setCraftsmanship(parsed);
+      }
+      const cachedServices = localStorage.getItem("rh_offline_services");
+      if (cachedServices) {
+        const parsed = JSON.parse(cachedServices);
+        if (Array.isArray(parsed) && parsed.length > 0) setServices(parsed);
+      }
+    } catch (e) {}
+
     // 1. Site Settings
     fetch(`${API_BASE}/site`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(data => setSite(prev => ({ ...prev, ...data })))
-      .catch(() => console.log("Using PDF fallback for Site Settings"));
+      .catch(() => {});
 
     // 2. Projects
     fetch(`${API_BASE}/projects`)
@@ -777,7 +815,7 @@ function App() {
       .then(data => {
         if (Array.isArray(data) && data.length > 0) setProjects(data);
       })
-      .catch(() => console.log("Using PDF fallback for Projects"));
+      .catch(() => {});
 
     // 3. Craftsmanship
     fetch(`${API_BASE}/craftsmanship`)
@@ -785,7 +823,7 @@ function App() {
       .then(data => {
         if (Array.isArray(data) && data.length > 0) setCraftsmanship(data);
       })
-      .catch(() => console.log("Using PDF fallback for Craftsmanship"));
+      .catch(() => {});
 
     // 4. Services
     fetch(`${API_BASE}/services`)
@@ -793,7 +831,7 @@ function App() {
       .then(data => {
         if (Array.isArray(data) && data.length > 0) setServices(data);
       })
-      .catch(() => console.log("Using PDF fallback for Services"));
+      .catch(() => {});
   }, []);
 
   const activeProject = React.useMemo(() => {
