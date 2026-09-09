@@ -716,6 +716,8 @@ function Lightbox({ image, onClose }) {
 
 // 11. Footer Component
 function Footer({ site }) {
+  const adminUrl = window.location.pathname.includes("/frontend") ? "../admin/index.html" : "admin/index.html";
+
   return (
     <footer className="royal-foot">
       <div className="foot-wrap">
@@ -726,7 +728,7 @@ function Footer({ site }) {
           {site.footerMotto || "ROYAL • TIMELESS • AUTHENTIC • ARCHITECTURAL"}
         </div>
         <div>
-          <a href="../admin/index.html" className="admin-stealth-link" title="Admin Portal">
+          <a href={adminUrl} className="admin-stealth-link" title="Admin Portal">
             Admin Portal
           </a>
         </div>
