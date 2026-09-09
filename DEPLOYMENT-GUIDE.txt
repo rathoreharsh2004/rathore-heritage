@@ -1,0 +1,36 @@
+RATHORE HERITAGE — QUICK DEPLOYMENT
+
+A) GITHUB PAGES CUSTOMER SITE
+1. Create GitHub repo:
+   username.github.io
+2. Copy the CONTENTS of frontend/ into the repository root.
+3. Commit + push to main.
+4. GitHub -> Settings -> Pages -> Deploy from branch -> main -> /root -> Save.
+5. Your URL will be https://username.github.io/
+
+B) BACKEND
+1. Push backend/ to a GitHub repo (same repo is okay).
+2. Create a Render Web Service from the repo.
+3. Root Directory: backend
+4. Build Command: npm install
+5. Start Command: npm start
+6. Add Environment Variables from backend/.env.example.
+7. Set MONGODB_URI to your MongoDB Atlas connection string.
+8. Set a strong JWT_SECRET.
+9. Set ADMIN_EMAIL and ADMIN_PASSWORD.
+10. Deploy.
+
+C) CONNECT FRONTEND TO DEPLOYED BACKEND
+In frontend/app.js, change:
+const API = window.API_URL || "http://localhost:5000/api";
+to:
+const API = "https://YOUR-BACKEND-URL/api";
+
+Then push the frontend again to GitHub Pages.
+
+D) ADMIN
+Open admin/index.html locally while developing, or deploy the admin folder separately.
+For a public production admin URL, use HTTPS and protect it with the backend JWT login.
+
+E) DOMAIN (OPTIONAL)
+GitHub Pages supports a custom domain from repository Settings -> Pages.

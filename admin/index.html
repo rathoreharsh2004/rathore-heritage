@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Rathore Heritage Developers — Admin CMS</title>
+  <link rel="icon" href="assets/logo.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ==================== LOGIN WRAPPER ==================== -->
+  <div id="login" class="login-wrap">
+    <div class="login-box">
+      <div class="login-crest">
+        <img src="assets/logo.png" alt="RH Emblem" onerror="this.style.display='none'">
+      </div>
+      <h1>RATHORE HERITAGE</h1>
+      <p>Content Management & Royal Administration</p>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="loginEmail" required placeholder="admin@example.com" value="admin@example.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" value="admin123">
+        </div>
+        <button type="submit" class="btn-admin" id="loginBtn">SIGN IN TO CMS →</button>
+      </form>
+
+      <div class="login-hint">
+        Default credentials: <code>admin@example.com</code> / <code>admin123</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN ADMIN APPLICATION ==================== -->
+  <div id="app" class="admin-shell hidden">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <img src="assets/logo.png" alt="Crest">
+        <div class="sidebar-brand">
+          <h2>RATHORE CMS</h2>
+          <span>HERITAGE ADMIN</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="sidebar-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">
+          <span>📊</span> Dashboard
+        </button>
+        <button class="sidebar-btn" data-tab="content" onclick="switchTab('content')">
+          <span>🏛️</span> Website Content
+        </button>
+        <button class="sidebar-btn" data-tab="projects" onclick="switchTab('projects')">
+          <span>🏰</span> Signature Projects
+        </button>
+        <button class="sidebar-btn" data-tab="craftsmanship" onclick="switchTab('craftsmanship')">
+          <span>✨</span> Craftsmanship
+        </button>
+        <button class="sidebar-btn" data-tab="services" onclick="switchTab('services')">
+          <span>📜</span> What We Offer
+        </button>
+        <button class="sidebar-btn" data-tab="enquiries" onclick="switchTab('enquiries')">
+          <span>✉️</span> Enquiries <b id="newBadge" style="background:#e67e22;color:#fff;padding:2px 6px;border-radius:10px;font-size:10px;margin-left:auto;">0</b>
+        </button>
+        <button class="sidebar-btn" data-tab="uploader" onclick="switchTab('uploader')">
+          <span>📸</span> Image Manager
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="../frontend/index.html" target="_blank" class="preview-link">
+          ↗ Preview Live Website
+        </a>
+        <button class="logout-btn" onclick="logout()">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <div class="top-bar">
+        <div class="top-title">
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSubtitle">System metrics and direct database controls.</p>
+        </div>
+        <div>
+          <span id="dbStatus" class="db-status-badge">
+            <span style="font-size:10px;">●</span> MongoDB Connected
+          </span>
+        </div>
+      </div>
+
+      <!-- TAB 1: DASHBOARD -->
+      <section id="tab-dashboard" class="tab-pane">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span>Signature Projects</span>
+            <b id="statProjects">4</b>
+          </div>
+          <div class="stat-card">
+            <span>Gallery Images</span>
+            <b id="statImages">8</b>
+          </div>
+          <div class="stat-card">
+            <span>Customer Enquiries</span>
+            <b id="statEnquiries">0</b>
+          </div>
+          <div class="stat-card">
+            <span>New Inquiries</span>
+            <b id="statNewEnquiries" style="color:#e67e22;">0</b>
+          </div>
+        </div>
+
+        <div class="cms-panel">
+          <div class="panel-header">
+            <h2>Quick CMS Actions</h2>
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;">
+            <button class="btn-secondary" onclick="openNewProjectModal()">+ Add New Project</button>
+            <button class="btn-secondary" onclick="switchTab('content')">Edit Hero & About</button>
+            <button class="btn-secondary" onclick="switchTab('uploader')">Upload High-Res Photo</button>
+            <button class="btn-secondary" onclick="switchTab('enquiries')">View Customer Inquiries</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: WEBSITE CONTENT -->
+      <section id="tab-content" class="tab-pane hidden">
+        <div class="cms-panel">
+          <div class="panel-header">
+            <h2>Hero Section (PDF Page 1)</h2>
+          </div>
+          <div class="form-group">
+            <label>Above Tagline / Category Eyebrow</label>
+            <input type="text" id="cfgEyebrow">
+          </div>
+          <div class="form-group">
+            <label>Hero Headline</label>
+            <textarea id="cfgHeroTitle" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Hero Subtitle / Statement</label>
+            <input type="text" id="cfgHeroSubtitle">
+          </div>
+          <div class="form-group">
+            <label>Hero Background Image URL</label>
+            <input type="text" id="cfgHeroImage">
+          </div>
+        </div>
+
+        <div class="cms-panel">
+          <div class="panel-header">
+            <h2>About Section (PDF Page 2)</h2>
+          </div>
+          <div class="form-group">
+            <label>About Heading</label>
+            <input type="text" id="cfgAboutTitle">
+          </div>
+          <div class="form-group">
+            <label>About Content (Paragraphs)</label>
+            <textarea id="cfgAboutContent" rows="8"></textarea>
+          </div>
+          <div class="form-group">
+            <label>About Image URL</label>
+            <input type="text" id="cfgAboutImage">
+          </div>
+        </div>
+
+        <div class="cms-panel">
+          <div class="panel-header">
+            <h2>Contact & Social (PDF Page 13)</h2>
+          </div>
+          <div class="form-group">
+            <label>Phone Numbers</label>
+            <input type="text" id="cfgPhone">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="cfgEmail">
+          </div>
+          <div class="form-group">
+            <label>Instagram Handle</label>
+            <input type="text" id="cfgInstagram">
+          </div>
+          <div class="form-group">
+            <label>Brand Statement Quote</label>
+            <input type="text" id="cfgBrandStatement">
+          </div>
+          <div class="form-group">
+            <label>Footer Motto</label>
+            <input type="text" id="cfgFooterMotto">
+          </div>
+
+          <button class="btn-admin" onclick="saveSiteSettings()" style="width:auto;padding:12px 30px;margin-top:10px;">
+            SAVE ALL CONTENT CHANGES →
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB 3: PROJECTS -->
+      <section id="tab-projects" class="tab-pane hidden">
+        <div class="cms-panel">
+          <div class="panel-header">
+            <h2>Signature Projects (PDF Pages 4-11)</h2>
+            <button class="btn-secondary" onclick="openNewProjectModal()">+ Add Project</button>
+          </div>
+
+          <table class="projects-table">
+            <thead>
+              <tr>
+                <th>Preview</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Elements</th>
+                <th>Gallery</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="projectsTableBody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 4: CRAFTSMANSHIP -->
+      <section id="tab-craftsmanship" class="tab-pane hidden">
+        <div class="cms-panel">
+          <div class="panel-header">
+            <h2>Craftsmanship Elements (PDF Page 3)</h2>
+          </div>
+          <div id="craftList"></div>
+          <div class="form-group" style="margin-top:24px;">
+            <label>Closing Brand Statement (PDF Page 3)</label>
+            <textarea id="cfgCraftClosing" rows="3"></textarea>
+          </div>
+          <button class="btn-admin" onclick="saveCraftsmanship()" style="width:auto;padding:12px 30px;">
+            SAVE CRAFTSMANSHIP →
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB 5: WHAT WE OFFER -->
+      <section id="tab-services" class="tab-pane hidden">
+        <div class="cms-panel">
+          <div class="panel-header">
+            <h2>What We Offer (PDF Page 12)</h2>
+          </div>
+          <div id="servicesList"></div>
+          <button class="btn-admin" onclick="saveServices()" style="width:auto;padding:12px 30px;margin-top:20px;">
+            SAVE SERVICES →
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB 6: ENQUIRIES -->
+      <section id="tab-enquiries" class="tab-pane hidden">
+        <div class="cms-panel">
+          <div class="panel-header">
+            <h2>Customer Enquiries</h2>
+          </div>
+          <div id="enquiriesList">
+            <!-- Dynamically rendered -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 7: IMAGE UPLOADER -->
+      <section id="tab-uploader" class="tab-pane hidden">
+        <div class="cms-panel">
+          <div class="panel-header">
+            <h2>Persistent Cloud / Local Image Storage</h2>
+          </div>
+          <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">
+            Upload any image (JPG, PNG, WEBP up to 15MB). The asset will be saved and you will receive a persistent hosted URL to use anywhere in the site or projects.
+          </p>
+
+          <form id="uploadForm" onsubmit="handleImageUpload(event)" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+            <input type="file" id="imageFileInput" accept="image/*" required style="width:auto;">
+            <button type="submit" class="btn-admin" style="width:auto;padding:12px 24px;">Upload Image</button>
+          </form>
+
+          <div id="uploadResult" style="margin-top:24px;" class="hidden">
+            <h4 style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--gold-light);margin-bottom:8px;">Uploaded Image URL</h4>
+            <div style="display:flex;gap:12px;align-items:center;">
+              <input type="text" id="uploadedUrlInput" readonly style="font-family:monospace;background:#1a1715;">
+              <button class="btn-secondary" onclick="copyUploadedUrl()">Copy URL</button>
+            </div>
+            <div style="margin-top:16px;">
+              <img id="uploadedPreview" src="" alt="Preview" style="max-height:220px;border-radius:10px;border:1px solid var(--border-color);">
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ==================== PROJECT EDITOR MODAL ==================== -->
+  <div id="projectModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modalProjectTitle">Edit Project</h2>
+        <button class="modal-close" onclick="closeProjectModal()">&times;</button>
+      </div>
+
+      <form id="projectForm" onsubmit="handleSaveProject(event)">
+        <input type="hidden" id="pId">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-group">
+            <label>Project Name *</label>
+            <input type="text" id="pName" required>
+          </div>
+          <div class="form-group">
+            <label>Slug (URL key) *</label>
+            <input type="text" id="pSlug" required>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-group">
+            <label>Project Type *</label>
+            <input type="text" id="pType" required placeholder="e.g. Heritage Haveli Construction">
+          </div>
+          <div class="form-group">
+            <label>Location *</label>
+            <input type="text" id="pLocation" required value="Udaipur">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Featured Image URL *</label>
+          <input type="text" id="pFeaturedImage" required placeholder="assets/oladar-haveli-1.jpg">
+        </div>
+
+        <div class="form-group">
+          <label>Short Description (for cards)</label>
+          <textarea id="pShortDescription" rows="2"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Full Description (for project detail page)</label>
+          <textarea id="pFullDescription" rows="4"></textarea>
+        </div>
+
+        <!-- Architectural Elements Builder -->
+        <div style="margin:24px 0 10px;padding-top:20px;border-top:1px solid var(--border-color);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="font-family:var(--font-royal);font-size:15px;color:var(--gold-light);">Architectural & Heritage Elements</h3>
+            <button type="button" class="btn-secondary" onclick="addArchElementBlock()">+ Add Element</button>
+          </div>
+          <div id="archElementsContainer"></div>
+        </div>
+
+        <!-- Gallery Images Builder -->
+        <div style="margin:24px 0 20px;padding-top:20px;border-top:1px solid var(--border-color);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="font-family:var(--font-royal);font-size:15px;color:var(--gold-light);">Gallery Images & Lightbox</h3>
+            <button type="button" class="btn-secondary" onclick="addGalleryImageBlock()">+ Add Photo</button>
+          </div>
+          <div id="galleryContainer"></div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px;border-top:1px solid var(--border-color);padding-top:18px;">
+          <button type="button" class="btn-secondary" onclick="closeProjectModal()">Cancel</button>
+          <button type="submit" class="btn-admin" style="width:auto;padding:12px 30px;">SAVE PROJECT TO MONGODB</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
